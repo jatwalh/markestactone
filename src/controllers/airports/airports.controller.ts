@@ -1,11 +1,11 @@
-import { Airport } from "../../models/airports/airports.model";
+// import { Airport } from "../../models/airports/airports.model";
 
 
-const create = (req, res)=>{
-    try{    
+// const create = (req, res)=>{
+//     try{    
 
-    } catch(err){
-        console.log(err)
-        res.status(500).json({err : err.message})
-    }
-}
+//     } catch(err){
+//         console.log(err)
+//         res.status(500).json({err : err.message})
+//     }
+// }
