@@ -26,7 +26,7 @@ app.use(cookieParser());
 // app.use('/orders', orderRouter);
 
 
-app.use("/", (req, res) => {
+app.use("/hello", (req, res) => {
   res.send("hello");
 });
 
