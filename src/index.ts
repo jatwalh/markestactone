@@ -1,6 +1,6 @@
 import app from './app';
 import http from 'http';
-import '../src/config/db';
+import './config/db';
 
 const PORT = 3000;
 
