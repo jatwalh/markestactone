@@ -7,9 +7,8 @@ import './config/db';
 
 
 // Import routers (adjust the import paths if needed)
-// import userRouter from './router/user.router';
-// import prodRouter from './router/product/product.router';
-// import orderRouter from './router/orders/orders.router';
+import airportRouter from "./routers/airports/airports.router"
+import { Airport } from './models/airports/airports.model';
 
 const app: Application = express();
 
@@ -21,14 +20,32 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // // Routes
-// app.use('/user', userRouter);
-// app.use('/product', prodRouter);
-// app.use('/orders', orderRouter);
+app.use('/airports', airportRouter);
 
 
-app.use("/hello", (req, res) => {
-  res.send("hello");
-});
+
+// app.use("/hello", async function updateOldAirports() { 
+
+
+//   const airports = await Airport.find({
+//     location: { $exists: false }
+//   });
+
+//   for (const airport of airports) {
+//     if (airport.longitude && airport.latitude) {
+//       airport.location = {
+//         type: 'Point',
+//         coordinates: [airport.longitude, airport.latitude]
+//       };
+//       await airport.save();
+//       console.log(`Updated: ${airport.name}`);
+//     }
+//   }
+
+//   console.log('Finished updating old airport documents.');
+
+// }
+// );
 
 
 export default app;

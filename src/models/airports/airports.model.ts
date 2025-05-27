@@ -8,6 +8,10 @@ export interface IAirport extends Document {
     latitude: number;
     longitude: number;
     isInternational: boolean;
+    location: {
+        type: 'Point';
+        coordinates: [number, number]; // [longitude, latitude]
+    };
 }
 
 const AirportSchema = new Schema<IAirport>({
@@ -40,7 +44,20 @@ const AirportSchema = new Schema<IAirport>({
     isInternational: {
         type: Boolean,
         default: false
+    },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point',
+            required: true
+        },
+        coordinates: {
+            type: [Number],
+            required: true
+        }
     }
 });
+AirportSchema.index({ location: '2dsphere' });
 
 export const Airport = model<IAirport>('Airport', AirportSchema);
