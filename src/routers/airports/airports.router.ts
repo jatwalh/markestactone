@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
-    addAirports, addSingleAirport, getAllAirports,
-    getAirportsByCountry, getAirportsNearCity
+    addAirports, addSingleAirport, getAllAirports, countriesWithCities,
+    getAirportsByCountry, getAirportsNearCityApiUrl
 } from '../../controllers/airports/airports.controller';
 
 const airportRouter = Router();
@@ -14,9 +14,12 @@ airportRouter.get('/findall', getAllAirports); // http://localhost:3000/airports
 
 airportRouter.get('/findairport/:country', getAirportsByCountry); // http://localhost:3000/airports/findairport/india
 
-airportRouter.get('/nearby', getAirportsNearCity); // http://localhost:3000/airports/findairport/india
+airportRouter.get('/countrieswithcities', countriesWithCities); // http://localhost:3000/airports/countrieswithcities
 
-
+airportRouter.get('/nearby', getAirportsNearCityApiUrl); 
 // http://localhost:3000/airports/nearby?city=Ambala&country=India
+
+
+
 
 export default airportRouter;

@@ -2,11 +2,8 @@ import { Request, Response } from 'express';
 import { Airport } from "../../models/airports/airports.model";
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { getCoordinatesFromCity, fetchCoordinates } from "../../Utils/utils"
 
-const workbook = XLSX.readFile('./bOne.xlsx');
-const sheetName = workbook.SheetNames[0];
-const sheet = workbook.Sheets[sheetName];
-const data = XLSX.utils.sheet_to_json<AirportRow>(sheet);
 interface AirportRow {
     name: string;
     iata: string;
@@ -15,38 +12,14 @@ interface AirportRow {
     isInternational?: boolean;
 }
 
-export const getCoordinatesFromCity = async (
-    city: string,
-    country: string
-): Promise<{ latitude: number; longitude: number }> => {
-    const query = `${city}, ${country}`;
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'airport-locator-app'
-            }
-        });
-
-        const data = response.data;
-
-        if (!data || data.length === 0) {
-            throw new Error('Location not found');
-        }
-
-        return {
-            latitude: parseFloat(data[0].lat),
-            longitude: parseFloat(data[0].lon)
-        };
-    } catch (error) {
-        console.error('Error fetching coordinates:', error);
-        throw new Error('Failed to fetch coordinates');
-    }
-};
+const workbook = XLSX.readFile('./bOne.xlsx');
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+const data = XLSX.utils.sheet_to_json<AirportRow>(sheet);
 
 
-export const getAirportsNearCity = async (req: Request, res: Response): Promise<void> => {
+// get the nearest airport by just enter city and country
+export const getAirportsNearCityApiUrl = async (req: Request, res: Response): Promise<void> => {
     try {
         let { city, country } = req.query;
 
@@ -74,7 +47,7 @@ export const getAirportsNearCity = async (req: Request, res: Response): Promise<
                     distanceField: 'distanceInMeters',
                     spherical: true,
                     query: { country: country },
-                    maxDistance: 100000 // 100 km
+                    maxDistance: 300000 // serach in 300 kms of area 
                 }
             },
             {
@@ -91,57 +64,91 @@ export const getAirportsNearCity = async (req: Request, res: Response): Promise<
         }
 
         res.status(200).json({ data: nearbyAirports });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error in getAirportsNearCity:', error);
-        res.status(500).json({ message: 'Internal server error.' });
+        // res.status(500).json({ "error": error });
+        res.status(500).json({ message: error.message || 'Internal Server Error' });
+    }
+
+};
+
+export const getAirportsNearCity = async (req: Request, res: Response): Promise<void> => {
+    const { city, country } = req.query;
+
+    if (!city || !country) {
+        // No input yet – render form only
+        return res.render('form', { airports: null, error: null, city: '', country: '' });
+    }
+
+    try {
+        const cityStr = (city as string).trim().toLowerCase();
+        const countryStr = (country as string).trim().toLowerCase();
+
+        const { latitude, longitude } = await getCoordinatesFromCity(cityStr, countryStr);
+
+        const nearbyAirports = await Airport.aggregate([
+            {
+                $geoNear: {
+                    near: {
+                        type: 'Point',
+                        coordinates: [longitude, latitude],
+                    },
+                    distanceField: 'distanceInMeters',
+                    spherical: true,
+                    query: { country: countryStr },
+                    maxDistance: 300000
+                }
+            },
+            { $sort: { distanceInMeters: 1 } },
+            { $limit: 5 }
+        ]);
+
+        res.render('form', {
+            airports: nearbyAirports,
+            error: null,
+            city,
+            country
+        });
+
+    } catch (err: any) {
+        res.render('form', {
+            airports: null,
+            error: err.message || 'Something went wrong',
+            city,
+            country
+        });
     }
 };
 
+export const countriesWithCities = async (req: Request, res: Response) => {
+  try {
+    const result = await Airport.aggregate([
+      {
+        $group: {
+          _id: "$country",
+          cities: { $addToSet: "$city" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          country: "$_id",
+          cities: 1
+        }
+      },
+      {
+        $sort: { country: 1 }
+      }
+    ]);
 
-// export const getAirportsNearCity = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         let { city, country } = req.query;
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching countries with cities:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
-//         if (!city || !country) {
-//             res.status(400).json({ message: 'City and country are required.' });
-//             return;
-//         }
-
-//         // Normalize for matching DB values
-//         city = (city as string).trim().toLowerCase();
-//         country = (country as string).trim().toLowerCase();
-
-//         // Step 1: Get coordinates of city
-//         const { latitude, longitude } = await getCoordinatesFromCity(city, country);
-
-//         // Step 2: Geospatial query to find nearest airports
-//         const airports = await Airport.find({
-//             country: country,
-//             location: {
-//                 $near: {
-//                     $geometry: {
-//                         type: 'Point',
-//                         coordinates: [longitude, latitude]
-//                     },
-//                     $maxDistance: 100000 // 100 km, adjust as needed
-//                 }
-//             }
-//         });
-
-//         if (!airports.length) {
-//             res.status(404).json({ message: 'No nearby airports found.' });
-//             return;
-//         }
-
-//         res.status(200).json({ data: airports });
-//     } catch (error) {
-//         console.error('Error in getAirportsNearCity:', error);
-//         res.status(500).json({ message: 'Internal server error.' });
-//     }
-// };
-
- 
-
+// get airports by country
 export const getAirportsByCountry = async (req: Request, res: Response): Promise<void> => {
     try {
         const { country } = req.params;
@@ -160,11 +167,12 @@ export const getAirportsByCountry = async (req: Request, res: Response): Promise
         return
     } catch (error) {
         console.error('Error fetching airports by country:', error);
-        res.status(500).json({ message: 'Internal server error.' });
+        res.status(500).json({ error: error });
         return
     }
 };
 
+// airport registration or addition
 export const addSingleAirport = async (req: Request, res: Response): Promise<void> => {
     try {
         const {
@@ -197,8 +205,6 @@ export const addSingleAirport = async (req: Request, res: Response): Promise<voi
 
         const { lat, lon } = geoResponse.data[0];
 
-        console.log("le", lat, lon)
-
         const airport = new Airport({
             name,
             iata: iata.toUpperCase().trim(),
@@ -218,8 +224,7 @@ export const addSingleAirport = async (req: Request, res: Response): Promise<voi
     }
 };
 
-
-
+// lsit of all airports world wide
 export const getAllAirports = async (req: Request, res: Response): Promise<void> => {
     try {
         const airports = await Airport.find();
@@ -232,29 +237,7 @@ export const getAllAirports = async (req: Request, res: Response): Promise<void>
     }
 };
 
-
-
-
-
-async function fetchCoordinates(city: string, country: string) {
-    try {
-        const query = encodeURIComponent(`${city}, ${country}`);
-        const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
-
-        const response = await axios.get(url, {
-            headers: { 'User-Agent': 'himanshujatwal/1.0 (jatwalh@gmail.com)' }
-        });
-
-        if (response.data.length === 0) return null;
-
-        const { lat, lon } = response.data[0];
-        return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
-    } catch (err) {
-        console.error(`Failed to fetch coordinates for ${city}, ${country}`, err);
-        return null;
-    }
-}
-
+// bulk uploading of data by excel sheet ( rough fucntion )
 export const addAirports = async (req: Request, res: Response): Promise<void> => {
     for (const entry of data) {
         const { name, iata, city, country, isInternational } = entry;

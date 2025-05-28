@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Find Nearby Airports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        select,
+        input,
+        button {
+            margin-bottom: 15px;
+            padding: 8px;
+            width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Search Nearby Airports</h3>
+
+    <form action="/" method="get">
+        <label for="country">Country:</label>
+        <select name="country" id="country" required>
+            <option value="">-- Select Country --</option>
+            <% countriesWithCities.forEach(entry=> { %>
+                <option value="<%= entry.country %>" <%=country===entry.country ? 'selected' : '' %>>
+                    <%= entry.country %>
+                </option>
+                <% }) %>
+        </select><br>
+
+        <label for="city">City:</label>
+        <select name="city" id="city" required>
+            <option value="">-- Select City --</option>
+            <% if (selectedCities) { selectedCities.forEach(c=> { %>
+                <option value="<%= c %>" <%=city===c ? 'selected' : '' %>><%= c %>
+                </option>
+                <% }) } %>
+        </select><br>
+
+        <button type="submit">Find Airports</button>
+    </form>
+
+    <% if (error) { %>
+        <p style="color: red;">
+            <%= error %>
+        </p>
+        <% } %>
+
+            <% if (airports && airports.length> 0) { %>
+                <h2>Nearby Airports</h2>
+                <ul>
+                    <% airports.forEach(airport=> {
+                        const distanceKm = (airport.distanceInMeters / 1000).toFixed(2);
+                        %>
+                        <li>
+                            <strong>
+                                <%= airport.name %>
+                            </strong> (<%= airport.iata %>) - <%= distanceKm %> km
+                        </li>
+                        <% }); %>
+                </ul>
+                <% } else if (airports) { %>
+                    <p>No nearby airports found.</p>
+                    <% } %>
+
+                        <script>
+                            const countriesData = <% - JSON.stringify(countriesWithCities || []) %>;
+
+                            const countrySelect = document.getElementById('country');
+                            const citySelect = document.getElementById('city');
+
+                            countrySelect.addEventListener('change', function () {
+                                const selectedCountry = this.value;
+                                const entry = countriesData.find(e => e.country === selectedCountry);
+                                citySelect.innerHTML = '<option value="">-- Select City --</option>';
+
+                                if (entry && Array.isArray(entry.cities)) {
+                                    entry.cities.forEach(city => {
+                                        const option = document.createElement('option');
+                                        option.value = city;
+                                        option.textContent = city;
+                                        citySelect.appendChild(option);
+                                    });
+                                }
+                            });
+                        </script>
+
+</body>
+
+</html>
