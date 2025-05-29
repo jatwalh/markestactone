@@ -2,86 +2,6 @@ import { Request, Response } from 'express';
 import { Airport } from "../../models/airports/airports.model";
 import { getCoordinatesFromCity } from "../../Utils/utils"
 
-
-
-// get the nearest airport by just enter city and country
-// export const getAirportsNearCityRender = async (req: Request, res: Response): Promise<void> => {
-
-//      const { city, country } = req.query;
-
-//     // Get country list with cities for dropdown
-//     const countryList = await Airport.aggregate([
-//         {
-//             $group: {
-//                 _id: "$country",
-//             }
-//         },
-//         {
-//             $project: {
-//                 _id: 0,
-//                 country: "$_id"
-//             }
-//         },
-//         {
-//             $sort: { country: 1 }
-//         }
-//     ]);
-
-//     // If no query, show empty form
-//     if (!city || !country) {
-//         return res.render('form', {
-//             airports: null,
-//             error: null,
-//             city: '',
-//             country: '',
-//             countries: countryList.map(c => c.country)
-//         });
-//     }
-
-//     try {
-//         const cityStr = (city as string).trim().toLowerCase();
-//         const countryStr = (country as string).trim().toLowerCase();
-
-//         const { latitude, longitude } = await getCoordinatesFromCity(cityStr, countryStr);
-
-//         const nearbyAirports = await Airport.aggregate([
-//             {
-//                 $geoNear: {
-//                     near: {
-//                         type: 'Point',
-//                         coordinates: [longitude, latitude],
-//                     },
-//                     distanceField: 'distanceInMeters',
-//                     spherical: true,
-//                     query: { country: countryStr },
-//                     maxDistance: 300000
-//                 }
-//             },
-//             { $sort: { distanceInMeters: 1 } },
-//             { $limit: 5 }
-//         ]);
-
-//         res.render('form', {
-//             airports: nearbyAirports,
-//             error: null,
-//             city,
-//             country,
-//             countries: countryList.map(c => c.country)
-//         });
-
-//     } catch (err: any) {
-//         res.render('form', {
-//             airports: null,
-//             error: err.message || 'Something went wrong',
-//             city,
-//             country,
-//             countries: countryList.map(c => c.country)
-//         });
-//     }
-
-// };
-
-
 export const getAirportsNearCityRender = async (req: Request, res: Response): Promise<void> => {
     const { city, country } = req.query;
 
@@ -103,12 +23,10 @@ export const getAirportsNearCityRender = async (req: Request, res: Response): Pr
         { $sort: { country: 1 } }
     ]);
 
-    // Determine selected cities for given country (if any)
     const selectedCities = countriesWithCities.find(
         entry => entry.country === country
     )?.cities || [];
 
-    // If no city or country selected, render initial page
     if (!city || !country) {
         return res.render('form', {
             airports: null,
