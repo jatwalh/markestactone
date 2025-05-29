@@ -121,31 +121,31 @@ export const getAirportsNearCity = async (req: Request, res: Response): Promise<
 };
 
 export const countriesWithCities = async (req: Request, res: Response) => {
-  try {
-    const result = await Airport.aggregate([
-      {
-        $group: {
-          _id: "$country",
-          cities: { $addToSet: "$city" }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          country: "$_id",
-          cities: 1
-        }
-      },
-      {
-        $sort: { country: 1 }
-      }
-    ]);
+    try {
+        const result = await Airport.aggregate([
+            {
+                $group: {
+                    _id: "$country",
+                    cities: { $addToSet: "$city" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    country: "$_id",
+                    cities: 1
+                }
+            },
+            {
+                $sort: { country: 1 }
+            }
+        ]);
 
-    res.status(200).json(result);
-  } catch (error) {
-    console.error('Error fetching countries with cities:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error fetching countries with cities:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 }
 
 // get airports by country
@@ -276,6 +276,31 @@ export const addAirports = async (req: Request, res: Response): Promise<void> =>
         } catch (err) {
             console.error(`Error saving ${name}`, err);
         }
+    }
+}
+
+
+
+
+
+
+export const getCitiesbyCountry = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const country = req.query.country as string;
+        if (!country) {
+            res.status(400).json({ error: 'Country query parameter is required' });
+            return
+        }
+
+        // Find distinct cities for the given country
+        const cities = await Airport.distinct('city', { country: country });
+        
+        res.json(cities);
+        return
+    } catch (error) {
+        console.error('Error fetching cities:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return
     }
 }
 

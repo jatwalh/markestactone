@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 
@@ -22,29 +20,33 @@
 </head>
 
 <body>
-    <h3>Search Nearby Airports (with in 300 kms)</h3>
+    <h3>Search Nearby Airports (within 300 kms with limit 5 apriports)</h3>
 
-    <p>** for better experience select the country INDIA, because i have added almost every airport of INDIA,<br>  unlike other countries as i have limited data of Airports of them</p>
+    <a href="airports/search">
+        <button type="button">Go to Search Page</button>
+    </a>
+
+    <p>** for better experience select the country INDIA, because i have added almost every airport of INDIA,<br> unlike
+        other countries as i have limited data of Airports of them</p>
 
     <form action="/" method="get">
         <label for="country">Country:</label>
         <select name="country" id="country" required>
             <option value="">-- Select Country --</option>
-            <% countriesWithCities.forEach(entry => { %>
-                <option value="<%= entry.country %>" <%= country === entry.country ? 'selected' : '' %>>
+            <% countriesWithCities.forEach(entry=> { %>
+                <option value="<%= entry.country %>" <%=country===entry.country ? 'selected' : '' %>>
                     <%= entry.country %>
                 </option>
-            <% }) %>
+                <% }) %>
         </select><br>
 
         <label for="city">City:</label>
         <select name="city" id="city" required>
             <option value="">-- Select City --</option>
-            <% if (selectedCities) {
-                selectedCities.forEach(c => { %>
-                    <option value="<%= c %>" <%= city === c ? 'selected' : '' %>><%= c %></option>
-            <% })
-            } %>
+            <% if (selectedCities) { selectedCities.forEach(c=> { %>
+                <option value="<%= c %>" <%=city===c ? 'selected' : '' %>><%= c %>
+                </option>
+                <% }) } %>
         </select><br>
 
         <button type="submit">Find Airports</button>
@@ -54,44 +56,65 @@
         <p style="color: red;">
             <%= error %>
         </p>
-    <% } %>
+        <% } %>
 
-    <% if (airports && airports.length > 0) { %>
-        <h2>Nearby Airports</h2>
-        <ul>
-            <% airports.forEach(airport => {
-                const distanceKm = (airport.distanceInMeters / 1000).toFixed(2);
-            %>
-                <li>
-                    <strong><%= airport.name %></strong> (<%= airport.iata %>) - <%= distanceKm %> km
-                </li>
-            <% }); %>
-        </ul>
-    <% } else if (airports) { %>
-        <p>No nearby airports found.</p>
-    <% } %>
+            <% if (airports && airports.length> 0) { %>
+                <h2>Nearby Airports</h2>
+                <ul>
+                    <% airports.forEach(airport=> {
+                        const distanceKm = (airport.distanceInMeters / 1000).toFixed(2);
+                        %>
+                        <li>
+                            <strong>
+                                <%= airport.name %>
+                            </strong> (<%= airport.iata %>) - <%= distanceKm %> km
+                        </li>
+                        <% }) %>
+                </ul>
+                <% } else if (airports) { %>
+                    <p>No nearby airports found.</p>
+                    <% } %>
 
-  <script>
-  const countriesData = <%- JSON.stringify(countriesWithCities || []) %>;
-  
-  const countrySelect = document.getElementById('country');
-  const citySelect = document.getElementById('city');
+                        <script>
+                            const countrySelect = document.getElementById('country');
+                            const citySelect = document.getElementById('city');
 
-  countrySelect.addEventListener('change', function () {
-    const selectedCountry = this.value;
-    const entry = countriesData.find(e => e.country === selectedCountry);
-    citySelect.innerHTML = '<option value="">-- Select City --</option>';
+                            countrySelect.addEventListener('change', async function () {
+                                const selectedCountry = this.value;
 
-    if (entry && Array.isArray(entry.cities)) {
-      entry.cities.forEach(city => {
-        const option = document.createElement('option');
-        option.value = city;
-        option.textContent = city;
-        citySelect.appendChild(option);
-      });
-    }
-  });
-</script>
+                                citySelect.innerHTML = '<option value="">Loading cities...</option>';
+
+                                if (!selectedCountry) {
+                                    citySelect.innerHTML = '<option value="">-- Select City --</option>';
+                                    return;
+                                }
+
+                                try {
+                                    const response = await fetch(`airports/get-cities?country=${encodeURIComponent(selectedCountry)}`);
+                                    if (!response.ok) throw new Error('Network response was not ok');
+
+                                    const cities = await response.json();
+
+                                    citySelect.innerHTML = '<option value="">-- Select City --</option>';
+
+                                    cities.forEach(city => {
+                                        const option = document.createElement('option');
+                                        option.value = city;
+                                        option.textContent = city;
+                                        citySelect.appendChild(option);
+                                    });
+                                } catch (error) {
+                                    citySelect.innerHTML = '<option value="">Error loading cities</option>';
+                                    console.error('Failed to fetch cities:', error);
+                                }
+                            });
+
+                            if (countrySelect.value) {
+                                countrySelect.dispatchEvent(new Event('change'));
+                            }
+                        </script>
+
+
 
 </body>
 

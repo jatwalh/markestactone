@@ -28,5 +28,9 @@ app.use('/airports', airportRouter);
 app.get('/', getAirportsNearCityRender);
 
 
+app.get('/search', (req, res) => {
+    res.render('search');
+});
+
 
 export default app;
