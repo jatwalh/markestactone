@@ -17,9 +17,10 @@ import { getAllAirportsRender } from '../../controllers/airports/airports.ejs.co
 
 
 // simple api routes 
-airportRouter.post('/create', addAirports); //http://localhost:3000/airports/create
-
 airportRouter.post('/createsingle', addSingleAirport); // http://localhost:3000/airports/createSingle
+
+airportRouter.get('/nearby', getAirportsNearCityApiUrl);
+// http://localhost:3000/airports/nearby?city=Ambala&country=India
 
 airportRouter.get('/findall', getAllAirports); // http://localhost:3000/airports/findall
 
@@ -27,20 +28,20 @@ airportRouter.get('/findairport/:country', getAirportsByCountry); // http://loca
 
 airportRouter.get('/countrieswithcities', countriesWithCities); // http://localhost:3000/airports/countrieswithcities
 
-airportRouter.get('/get-cities', getCitiesbyCountry); // http://localhost:3000/airports/get-cities
-
-airportRouter.get('/nearby', getAirportsNearCityApiUrl);
-// http://localhost:3000/airports/nearby?city=Ambala&country=India
+airportRouter.get('/get-cities', getCitiesbyCountry); // http://localhost:3000/airports/get-cities?country="india"
 
 
 
 
 
-// ejs temp render routes
+
+
+// ********* ejs temp render routes basically it a rout of html page ********
 airportRouter.get('/search', getAllAirportsRender);     // http://localhost:3000/airports/search
 
 
 
-
+//  ******* rough fucntion to add multple airports ********
+airportRouter.post('/create', addAirports); //http://localhost:3000/airports/create
 
 export default airportRouter;

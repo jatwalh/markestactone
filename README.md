@@ -61,12 +61,19 @@ step 5. and the loacl address is this http://localhost:3000
 
 Root Address :  https://markestactone.onrender.com/
 
+
+<<<<***************** if root address takes more time then hit this link first ***************>>>>
+
+    https://markestactone.onrender.com/airports/nearby?city=delhi&country=india
+
+    as it just a light weigth data request link once it opens , hit the Root Address
+
 1. Search nearest airport by entring city and country
 
     url :- https://markestactone.onrender.com/airports/nearby?city={cityname}&country={country}
 
     example url :   https://markestactone.onrender.com/airports/nearby?city=delhi&country=india
-                    https://markestactone.onrender.com/nearby?city=kurukshetra&country=india
+                    https://markestactone.onrender.com/airports/nearby?city=kurukshetra&country=india
 
 
 2 . get all airport of any country 
@@ -80,3 +87,51 @@ Root Address :  https://markestactone.onrender.com/
 3. find the list of the all airport of the our database  
 
     url :- https://markestactone.onrender.com/airports/findall
+
+
+    
+
+
+Base url for localmode :     http://localhost:3000 
+base url of render live mode :   https://markestactone.onrender.com/
+
+
+
+  WORKFLOW: Nearest Airport Finder & Airport Search
+
+ROUTE 1: Nearest Airports by City & Country
+-------------------------------------------
+1. User opens Home Page
+        |
+2. User selects a Country
+        |
+3. API fetches and populates Cities dropdown based on selected Country
+        |
+4. User selects a City and clicks "Find Airport" button
+        |
+5. API returns nearest airports:
+        - Within 300 KM of selected city
+        - Sorted in ascending order by distance
+        |
+6. User sees list of nearest airports
+        |
+        ---> END
+
+ROUTE 2: Airport Search (Full List)
+-----------------------------------
+1. User opens Home Page
+        |
+2. User clicks "Go to Search Page" button
+        |
+3. Navigated to Search Page
+        |
+4. Full list of airports is displayed
+        |
+5. User can use Search Input:
+        - Performs wildcard search (e.g., partial names, codes)
+        - Filters airport list in real-time
+        |
+6. User sees filtered search results
+        |
+        ---> END
+

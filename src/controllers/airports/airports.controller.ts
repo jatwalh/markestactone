@@ -47,7 +47,7 @@ export const getAirportsNearCityApiUrl = async (req: Request, res: Response): Pr
                     distanceField: 'distanceInMeters',
                     spherical: true,
                     query: { country: country },
-                    maxDistance: 300000 // serach in 300 kms of area 
+                    maxDistance: 300000 
                 }
             },
             {
@@ -76,7 +76,6 @@ export const getAirportsNearCity = async (req: Request, res: Response): Promise<
     const { city, country } = req.query;
 
     if (!city || !country) {
-        // No input yet – render form only
         return res.render('form', { airports: null, error: null, city: '', country: '' });
     }
 
@@ -174,21 +173,76 @@ export const getAirportsByCountry = async (req: Request, res: Response): Promise
 
 // airport registration or addition
 export const addSingleAirport = async (req: Request, res: Response): Promise<void> => {
-    try {
+    // try {
+    //     const {
+    //         name, iata, city, country, isInternational
+    //     } = req.body;
+
+    //     if (!name || !iata || !city || !country) {
+    //         res.status(400).json({ message: 'Missing required fields.' });
+    //         return
+    //     }
+
+    //     const existingAirport = await Airport.findOne({ iata: iata.toUpperCase().trim() });
+    //     if (existingAirport) {
+    //         res.status(409).json({ message: 'Airport with this IATA code already exists.' });
+    //         return
+    //     }
+    //     const query = encodeURIComponent(`${city}, ${country}`);
+    //     const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+
+    //     const geoResponse = await axios.get(nominatimUrl, {
+    //         headers: {
+    //             'User-Agent': 'himanshujatwal/1.0 (jatwalh@gmail.com)'
+    //         }
+    //     });
+
+    //     if (!geoResponse.data.length) {
+    //         res.status(404).json({ message: 'Location not found for the provided city and country.' });
+    //         return
+    //     }
+
+    //     const { lat, lon } = geoResponse.data[0];
+
+    //     const airport = new Airport({
+    //         name,
+    //         iata: iata.toUpperCase().trim(),
+    //         city,
+    //         country,
+    //         latitude: parseFloat(lat),
+    //         longitude: parseFloat(lon),
+    //         isInternational: isInternational || false
+    //     });
+    //     await airport.save();
+    //     console.log("airportle", airport)
+
+    //     res.status(201).json({ message: 'Airport added successfully.', data: airport });
+    // } catch (error) {
+    //     console.error('Error adding airport:', error);
+    //     res.status(500).json({ message: 'Internal server error.' });
+    // }
+
+        try {
         const {
-            name, iata, city, country, isInternational
+            name,
+            iata,
+            city,
+            country,
+            isInternational
         } = req.body;
 
         if (!name || !iata || !city || !country) {
             res.status(400).json({ message: 'Missing required fields.' });
-            return
+            return;
         }
 
-        const existingAirport = await Airport.findOne({ iata: iata.toUpperCase().trim() });
+        const iataCode = iata.toUpperCase().trim();
+        const existingAirport = await Airport.findOne({ iata: iataCode });
         if (existingAirport) {
             res.status(409).json({ message: 'Airport with this IATA code already exists.' });
-            return
+            return;
         }
+
         const query = encodeURIComponent(`${city}, ${country}`);
         const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
 
@@ -200,23 +254,28 @@ export const addSingleAirport = async (req: Request, res: Response): Promise<voi
 
         if (!geoResponse.data.length) {
             res.status(404).json({ message: 'Location not found for the provided city and country.' });
-            return
+            return;
         }
 
         const { lat, lon } = geoResponse.data[0];
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
 
         const airport = new Airport({
             name,
-            iata: iata.toUpperCase().trim(),
+            iata: iataCode,
             city,
             country,
-            latitude: parseFloat(lat),
-            longitude: parseFloat(lon),
-            isInternational: isInternational || false
+            latitude,
+            longitude,
+            isInternational: isInternational || false,
+            location: {
+                type: 'Point',
+                coordinates: [longitude, latitude]
+            }
         });
-        await airport.save();
-        console.log("airportle", airport)
 
+        await airport.save();
         res.status(201).json({ message: 'Airport added successfully.', data: airport });
     } catch (error) {
         console.error('Error adding airport:', error);
@@ -281,9 +340,6 @@ export const addAirports = async (req: Request, res: Response): Promise<void> =>
 
 
 
-
-
-
 export const getCitiesbyCountry = async (req: Request, res: Response): Promise<void> => {
     try {
         const country = req.query.country as string;
@@ -291,8 +347,6 @@ export const getCitiesbyCountry = async (req: Request, res: Response): Promise<v
             res.status(400).json({ error: 'Country query parameter is required' });
             return
         }
-
-        // Find distinct cities for the given country
         const cities = await Airport.distinct('city', { country: country });
         
         res.json(cities);

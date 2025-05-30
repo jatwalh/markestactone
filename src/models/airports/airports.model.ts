@@ -10,7 +10,7 @@ export interface IAirport extends Document {
     isInternational: boolean;
     location: {
         type: 'Point';
-        coordinates: [number, number]; // [longitude, latitude]
+        coordinates: [number, number];
     };
 }
 
